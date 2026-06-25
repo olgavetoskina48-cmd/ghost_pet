@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Серийчик</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .container {
+            background: white;
+            border-radius: 28px;
+            padding: 24px 20px 30px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .pet-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2d3436;
+            margin-bottom: 4px;
+        }
+        .emoji {
+            font-size: 80px;
+            margin: 4px 0;
+            display: block;
+        }
+        .stage {
+            font-size: 16px;
+            font-weight: 600;
+            color: #636e72;
+            margin-bottom: 6px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 12px;
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 12px 14px;
+            margin: 12px 0 18px;
+            font-size: 14px;
+            text-align: left;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .btn {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            flex: 1 0 auto;
+            min-width: 50px;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(108,92,231,0.2);
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-green { background: #00b894; }
+        .btn-blue { background: #0984e3; }
+        .btn-orange { background: #fdcb6e; color: #2d3436; }
+        .btn-purple { background: #a29bfe; }
+        .btn-pink { background: #fd79a8; }
+
+        .message {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #636e72;
+            min-height: 20px;
+            transition: color 0.3s;
+        }
+        .footer {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #b2bec3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="pet-name" id="petName">Серийчик</div>
+        <span id="petEmoji" class="emoji">🐱</span>
+        <div id="stage" class="stage">Стадия: —</div>
+
+        <div class="stats">
+            <span>🍖 Голод: <b id="golod">—</b></span>
+            <span>😊 Счастье: <b id="schastie">—</b></span>
+            <span>🧼 Гигиена: <b id="gigiena">—</b></span>
+            <span>⚡ Энергия: <b id="energia">—</b></span>
+            <span>📏 Дисциплина: <b id="disciplina">—</b></span>
+            <span>💬 Сообщений: <b id="soobsh">—</b></span>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-green" onclick="action('feed')">🍖</button>
+            <button class="btn btn-orange" onclick="action('play')">🎾</button>
+            <button class="btn btn-blue" onclick="action('wash')">🧼</button>
+            <button class="btn btn-purple" onclick="action('sleep')">😴</button>
+            <button class="btn btn-pink" onclick="action('train')">🏋️</button>
+            <button class="btn" onclick="action('dress')">👕</button>
+        </div>
+
+        <div id="message" class="message">Нажми кнопку, чтобы взаимодействовать</div>
+        <div class="footer">Серийчик</div>
+    </div>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        let tg = window.Telegram.WebApp;
+        let user_id = tg.initDataUnsafe?.user?.id;
+
+        const petEmojis = {
+            "кошка": "🐱",
+            "лиса": "🦊",
+            "собака": "🐶",
+            "енот": "🦝",
+            "хомяк": "🐹"
+        };
+
+        function showNotification(text, isError = true) {
+            const msg = document.getElementById('message');
+            msg.innerText = text;
+            msg.style.color = isError ? '#e17055' : '#00b894';
+            setTimeout(() => {
+                msg.style.color = '#636e72';
+            }, 5000);
+        }
+
+        function loadPet() {
+            if (!user_id) {
+                showNotification('❌ Не удалось определить пользователя');
+                return;
+            }
+            fetch(`/api/pet/${user_id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        showNotification('❌ ' + data.error);
+                        return;
+                    }
+                    document.getElementById('petName').innerText = data.pet_name || 'Серийчик';
+                    document.getElementById('stage').innerText = 'Стадия: ' + data.stage;
+                    document.getElementById('petEmoji').innerText = petEmojis[data.pet_type] || '🐾';
+                    document.getElementById('golod').innerText = data.голод;
+                    document.getElementById('schastie').innerText = data.счастье;
+                    document.getElementById('gigiena').innerText = data.гигиена;
+                    document.getElementById('energia').innerText = data.энергия;
+                    document.getElementById('disciplina').innerText = data.дисциплина;
+                    document.getElementById('soobsh').innerText = data.total_messages;
+                })
+                .catch(() => {
+                    showNotification('❌ Ошибка загрузки');
+                });
+        }
+
+        function action(type) {
+            if (!user_id) {
+                showNotification('❌ Нет пользователя');
+                return;
+            }
+            showNotification('⏳ ...', false);
+            fetch(`/api/${type}/${user_id}`, { method: 'POST' })
+                .then(res => res.json().then(data => ({ status: res.status, body: data })))
+                .then(({ status, body }) => {
+                    if (status === 400) {
+                        showNotification('⚠️ ' + (body.error || 'Ошибка'));
+                        return;
+                    }
+                    showNotification('✅ ' + (body.message || 'Готово!'), false);
+                    loadPet();
+                })
+                .catch(() => {
+                    showNotification('❌ Ошибка');
+                });
+        }
+
+        tg.ready();
+        loadPet();
+    </script>
+</body>
+  </html>
